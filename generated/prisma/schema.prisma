@@ -1,0 +1,65 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Category {
+  id BigInt @id @default(autoincrement())
+
+  categoryName  String   @map("categoryName") @db.VarChar(50)
+  description   String?  @map("description") @db.VarChar(500)
+  votingEnabled Boolean? @default(false) @map("voting_enabled")
+
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  createdBy String?   @map("created_by") @db.VarChar(36)
+  updatedAt DateTime? @updatedAt @map("modified_at") @db.Timestamptz(3)
+  updatedBy String?   @map("modified_by") @db.VarChar(36)
+
+  performances PerformanceCategory[]
+
+  @@map("category")
+}
+
+model Performance {
+  id BigInt @id @default(autoincrement())
+
+  name String @unique @map("name") @db.VarChar(50)
+
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  createdBy String?   @map("created_by") @db.VarChar(36)
+  updatedAt DateTime? @updatedAt @map("modified_at") @db.Timestamptz(3)
+  updatedBy String?   @map("modified_by") @db.VarChar(36)
+
+  categories PerformanceCategory[]
+
+  @@map("performance")
+}
+
+model PerformanceCategory {
+
+  performance_id BigInt @map("performance_id")
+  category_id    BigInt @map("category_id")
+  vote           Int    @map("vote") @db.Integer
+
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  createdBy String?   @map("created_by") @db.VarChar(36)
+  updatedAt DateTime? @updatedAt @map("modified_at") @db.Timestamptz(3)
+  updatedBy String?   @map("modified_by") @db.VarChar(36)
+
+  performances Performance @relation(fields: [performance_id], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  categories   Category    @relation(fields: [category_id], references: [id], onUpdate: Cascade, onDelete: Cascade)
+
+  @@id([performance_id, category_id])
+  @@map("performance_category")
+}
