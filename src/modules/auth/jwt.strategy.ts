@@ -12,6 +12,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
+  // validate là xác thực thông tin
   async validate(payload: any) {
     return {
       userId: payload.sub,

@@ -1,9 +1,8 @@
+import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
-import { INestApplication } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import * as dotenv from 'dotenv';
-dotenv.config();
+import { AppModule } from './app.module';
+import { RedisIoAdapter } from './libs/socket/redis-io-adapter';
 
 function serializeBigInt(obj) {
   return JSON.parse(
@@ -34,6 +33,18 @@ function setupSwagger(nestApp: INestApplication) {
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  try {
+    const redisIoAdapter = new RedisIoAdapter(app);
+    await redisIoAdapter.connectToRedis();
+    app.useWebSocketAdapter(redisIoAdapter);
+  } catch (error) {
+    console.error('Error connecting to Redis:', error);
+  }
+
+  app.enableCors();
+  app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
+  app.enableShutdownHooks();
+
   setupSwagger(app);
 
   await app.listen(process.env.PORT || 8080);
